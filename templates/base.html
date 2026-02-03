@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeNet IDS | Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon" href="data:,"> <!-- Fix for favicon 404 -->
+    <!-- External Assets -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="sidebar-info">
+        <div class="status-badge"><span class="dot"></span> System Online</div>
+    </div>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-shield-virus"></i> SafeNet IDS
+            </div>
+            <nav>
+                <a href="/" id="nav-home"><i class="fas fa-house-user"></i> Home</a>
+                <a href="/phishing" id="nav-phishing"><i class="fas fa-link-slash"></i> Phishing</a>
+                <a href="/upload" id="nav-upload"><i class="fas fa-cloud-arrow-up"></i> IDS App</a>
+                <a href="/dashboard" id="nav-dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+                <a href="/history" id="nav-history"><i class="fas fa-clock-rotate-left"></i> History</a>
+            </nav>
+        </header>
+        <hr class="nav-divider">
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script>
+        // Simple active link highlighter
+        const currentPath = window.location.pathname;
+        const navLinks = {
+            '/': 'nav-home',
+            '/phishing': 'nav-phishing',
+            '/upload': 'nav-upload',
+            '/dashboard': 'nav-dashboard',
+            '/history': 'nav-history'
+        };
+        if (navLinks[currentPath]) {
+            document.getElementById(navLinks[currentPath]).classList.add('active');
+        }
+    </script>
+</body>
+
+</html>

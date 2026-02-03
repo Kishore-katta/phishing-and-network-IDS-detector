@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="welcome-section">
+    <h1>Security Analysis Suite</h1>
+    <p>Select a tool to begin your security audit</p>
+</div>
+
+<div class="tool-selector">
+    <div class="tool-card ids">
+        <div class="tool-icon"><i class="fas fa-shield-virus"></i></div>
+        <h3>Network IDS</h3>
+        <p>Analyze network traffic logs to detect suspicious activity and potential intrusions.</p>
+        <a href="/upload" class="btn btn-ids">Open IDS App</a>
+    </div>
+
+    <div class="tool-card phishing">
+        <div class="tool-icon"><i class="fas fa-link-slash"></i></div>
+        <h3>Phishing Detector</h3>
+        <p>Scan URLs for phishing signatures and suspicious domain characteristics.</p>
+        <a href="/phishing" class="btn btn-phishing">Scan URL</a>
+    </div>
+</div>
+
+<style>
+    .welcome-section {
+        text-align: center;
+        margin-bottom: 50px;
+    }
+
+    .welcome-section h1 {
+        font-size: 3rem;
+        margin-bottom: 10px;
+        background: linear-gradient(to right, #fff, #94a3b8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .tool-selector {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        perspective: 1000px;
+    }
+
+    .tool-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 40px;
+        border-radius: 24px;
+        text-align: center;
+        transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+        cursor: default;
+    }
+
+    .tool-card:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-10px) rotateX(2deg);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .tool-icon {
+        font-size: 3rem;
+        margin-bottom: 20px;
+    }
+
+    .ids .tool-icon {
+        color: var(--accent-ids);
+    }
+
+    .phishing .tool-icon {
+        color: var(--accent-phish);
+    }
+
+    .tool-card h3 {
+        font-size: 1.8rem;
+        margin-bottom: 15px;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 12px 30px;
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 600;
+        margin-top: 20px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-ids {
+        background: var(--accent-ids);
+        color: #000;
+        box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+    }
+
+    .btn-phishing {
+        background: var(--accent-phish);
+        color: #000;
+        box-shadow: 0 0 20px rgba(45, 212, 191, 0.3);
+    }
+
+    .btn:hover {
+        transform: scale(1.05);
+        filter: brightness(1.2);
+    }
+</style>
+{% endblock %}
