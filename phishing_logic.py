@@ -1,14 +1,36 @@
 import re
 import math
+import os
 from collections import Counter
 from urllib.parse import urlparse
 import tldextract
 import wordfreq
 import difflib
+import joblib
+from utils import tokenizer_url
+import sys
+
+# Crucial: joblib/pickle often looks for the tokenizer function in the __main__ module 
+# if it was trained there, or in its original path. By putting it in utils and 
+# also patching it into __main__, we ensure maximum compatibility.
+import __main__
+__main__.tokenizer_url = tokenizer_url
+
+# Load the trained model
+MODEL_PATH = "models/phishing_nlp_model.pkl"
+try:
+    if os.path.exists(MODEL_PATH):
+        # We need to make sure 'tokenizer_url' is in the namespace for joblib to load it if it was pickled
+        model = joblib.load(MODEL_PATH)
+        print(f"INFO: Phishing NLP model loaded from {MODEL_PATH}")
+    else:
+        model = None
+        print(f"WARNING: Phishing NLP model not found at {MODEL_PATH}. Using rule-based logic only.")
+except Exception as e:
+    model = None
+    print(f"ERROR: Could not load phishing model: {e}")
 
 # Note: In the original code, these sets were populated from a CSV.
-# To keep the application functional without the CSV file (which seems missing or large),
-# I'll include some base logic. If the user provides the CSV later, this can be expanded.
 phishing_domains = set()
 phishing_patterns = set()
 
@@ -107,11 +129,45 @@ def predict_url(url):
     if not url.startswith(('http://', 'https://')):
         url = 'http://' + url
 
+    # 1. Check Blacklist (High Priority)
     if blacklist_check(url):
         return 0.99, "Phishing"
 
-    if universal_rule_check(url):
-        return 0.95, "Phishing"
+    # 2. Check ML Model (if available)
+    ml_prob = 0.0
+    ml_label = "Legitimate"
+    
+    if model:
+        try:
+            # Get probability scores
+            # model is a Pipeline([('tfidf', ...), ('clf', ...)])
+            probs = model.predict_proba([url])[0]
+            classes = model.classes_
+            
+            # Map classes (usually 'bad' and 'good' from your dataset)
+            prob_map = dict(zip(classes, probs))
+            
+            # 'bad' is Phishing in our training dataset
+            ml_prob = prob_map.get('bad', 0.0)
+            
+            if ml_prob > 0.5:
+                ml_label = "Phishing"
+        except Exception as e:
+            print(f"ML Prediction Error: {e}")
 
-    # Fallback to legitimate if no rules triggered and ML models are not active
-    return 0.10, "Legitimate"
+    # 3. Check Universal Rules
+    rules_triggered = universal_rule_check(url)
+
+    # 4. Combined Hybrid Logic
+    # If ML is very sure (>80%) or Rules + ML agree (>50%)
+    if ml_prob > 0.8:
+        return ml_prob, "Phishing"
+    elif rules_triggered and ml_prob > 0.3:
+        return max(0.90, ml_prob), "Phishing"
+    elif rules_triggered:
+        return 0.85, "Phishing"
+    
+    # Final Fallback
+    final_prob = max(0.10, ml_prob) 
+    return final_prob, "Phishing" if final_prob > 0.5 else "Legitimate"
+
