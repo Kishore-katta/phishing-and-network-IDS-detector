@@ -4,8 +4,19 @@ import os
 sys.dont_write_bytecode = True
 
 from flask import Flask, render_template, request, redirect
-from ml.predict import predict_attack
-import phishing_logic
+
+try:
+    from ml.predict import predict_attack
+except ImportError:
+    predict_attack = None
+    print("Warning: ml.predict could not be imported (likely dependencies missing). ML features disabled.")
+
+try:
+    import phishing_logic
+except ImportError:
+    phishing_logic = None
+    print("Warning: phishing_logic could not be imported. Phishing URL check disabled.")
+
 import json
 from datetime import datetime, timezone
 from collections import Counter
@@ -83,9 +94,9 @@ def _init_history_storage():
     try:
         import pymongo  # type: ignore  # noqa: F401
     except Exception as e:
-        raise RuntimeError(
-            "MongoDB backend requires pymongo. For MongoDB Atlas (mongodb+srv://), install: pip install \"pymongo[srv]\""
-        ) from e
+        print(f"Warning: MongoDB backend requires pymongo. functionality disabled. Error: {e}")
+        return False
+    return True
 
 _init_history_storage()
 
@@ -240,6 +251,9 @@ def upload():
             file.save(path)
 
             try:
+                if predict_attack is None:
+                     return render_template("upload.html", error="ML Model not loaded. Please wait for dependencies to finish installing.")
+
                 results = predict_attack(path)
 
                 try:
@@ -265,13 +279,16 @@ def phishing():
     if request.method == "POST":
         url = request.form.get("url")
         if url:
-            prob, prediction = phishing_logic.predict_url(url)
-            result = {
-                "url": url,
-                "probability": f"{prob*100:.2f}%",
-                "prediction": prediction,
-                "is_phishing": prediction == "Phishing"
-            }
+            if phishing_logic is None:
+                 result = {"url": url, "probability": "0%", "prediction": "Error: Logic not loaded", "is_phishing": False}
+            else:
+                prob, prediction = phishing_logic.predict_url(url)
+                result = {
+                    "url": url,
+                    "probability": f"{prob*100:.2f}%",
+                    "prediction": prediction,
+                    "is_phishing": prediction == "Phishing"
+                }
     return render_template("phishing.html", result=result)
 
 @app.route("/dashboard")
@@ -287,4 +304,13 @@ def history():
     return render_template("history.html", rows=rows)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    print("----------------------------------------------------------------")
+    print("SYSTEM: Starting Flask server on http://0.0.0.0:5000...")
+    print("SYSTEM: Press Ctrl+C to stop.")
+    print("----------------------------------------------------------------")
+    try:
+        app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
+    except Exception as e:
+        print(f"CRITICAL ERROR: Failed to start server: {e}")
+        import traceback
+        traceback.print_exc()
